@@ -1,0 +1,11 @@
+*
+!/.ssh/id_rsa.pub
+!/.emacs.el
+!/.emacs.d/*
+!/.zshrc_aliases
+!/.zshenv
+!/.zsh.d/*
+!/.profile
+!/.bashrc
+!/.Xmodmap
+!/template.tex

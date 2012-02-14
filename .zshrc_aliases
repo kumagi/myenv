@@ -1,0 +1,41 @@
+#!/bin/zsh
+# aliases
+alias where="command -v"
+alias j="jobs -l"
+
+alias ls="ls -G -F --color=auto"
+alias la="ls -a"
+alias ll="ls -l"
+alias lla="ls -la"
+alias grpe="grep"
+alias grepv"grep -v"
+alias ess="grep -v '^\s*$' | grep -v '^#'"
+
+alias du="du -h"
+alias df="df -h"
+
+alias su="su -l"
+
+alias rmbackup="rm *~"
+
+# extention
+alias -s tar='tar xvf'
+alias -s cpp='g++'
+alias -s cc='g++'
+alias -s txt=cat
+alias -s jpg=display
+alias -s gif=display
+alias -s jpeg=display
+alias -s bmp=display
+
+alias -g H='| head'
+alias -g T='| tail'
+alias -g S='| sed'
+alias  G='| grep'
+
+alias sakura="ssh kumazaki@182.48.52.238"
+alias amazon="ssh kumagi@175.41.247.112"
+export amazon_host=175.41.247.112
+alias persil="rdesktop persil -g 1276x950"
+alias amazon_home="kumagi@175.41.247.112:~/"
+

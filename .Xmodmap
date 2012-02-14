@@ -1,0 +1,35 @@
+clear lock
+clear control
+clear shift
+clear mod1
+clear mod2
+
+keycode 66 = Control_L
+keycode 37 = Control_L
+keycode 64 = Meta_L
+keycode 64 = Alt_L
+keycode 50 = Shift_L
+
+!keycode 100 = Mode_switch
+keycode 101 = Control_L
+keycode 102 = BackSpace
+
+keycode 43 = h H Left
+keycode 44 = j J Down
+keycode 45 = k K Up
+keycode 46 = l L Right
+
+keycode 57 = n N Return
+keycode 56 = b B BackSpace
+
+add control = Control_L Control_R
+add shift   = Shift_L Shift_R
+
+add mod1    = Alt_L Alt_R Meta_L
+!add mod2    = Mode_switch
+
+
+
+
+
+
