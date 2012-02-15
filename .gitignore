@@ -5,6 +5,7 @@
 !/.zshrc_aliases
 !/.zshenv
 !/.zsh.d/*
+!/.zsh.d
 !/.profile
 !/.bashrc
 !/.Xmodmap
