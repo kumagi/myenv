@@ -182,7 +182,7 @@
     (bookmark-save))
   (add-hook 'bookmark-after-jump-hook 'bookmark-arrange-latest-top))
 (global-set-key (kbd "\C-z\C-s") 'bookmark-set)
-(global-set-key (kbd "C-.") 'bookmark-bmenu-list)
+;(global-set-key (kbd "C-.") 'bookmark-bmenu-list)
 
 
 ;;; emacsclient to connect
@@ -877,3 +877,4 @@
 ;;(setq clojure-src-root (expand-file-name "/usr/bin/clojure"))
 (defun turn-on-paredit () (paredit-mode 1))
 (add-hook 'clojure-mode-hook 'turn-on-paredit)
+
