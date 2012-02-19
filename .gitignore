@@ -2,6 +2,7 @@
 !/.ssh/id_rsa.pub
 !/.emacs.el
 !/.emacs.d/*
+!/.zshrc
 !/.zshrc_aliases
 !/.zshenv
 !/.zsh.d/*
