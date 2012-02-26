@@ -43,9 +43,18 @@ fi
 # 単語単位での区切り
 export WORDCHARS='*?_-[]~=&;!#$%^(){}<>'
 bindkey ";5C" forward-word
+bindkey "[1;5C" forward-word
 bindkey "5C" forward-word
 bindkey ";5D" backward-word
+bindkey "[1;5D" backward-word
 bindkey "5D" backward-word
+
+bindkey ";3C" forward-word
+bindkey "[1;3C" forward-word
+bindkey "3C" forward-word
+bindkey ";3D" backward-word
+bindkey "[1;3D" backward-word
+bindkey "3D" backward-word
 
 # encolor make
 e_normal=`echo -e "\033[0;30m"`
@@ -200,7 +209,7 @@ RPROMPT='[%~:`update_rprompt`]'
 #rprompt_prompt
 PROMPT_COMMAND=update_rprompt
 
-chpwd_functions=($chpwd_functions dirs)
+ppchpwd_functions=($chpwd_functions dirs)
 
 
 fpath=(~/.pythonbrew/venvs $fpath)
@@ -211,3 +220,6 @@ zstyle ':completion:*:descriptions' format '%B%d%b'
 zstyle ':completion:*:messages' format '%d'
 zstyle ':completion:*:warnings' format 'No matches for: %d'
 zstyle ':completion:*' group-name ''
+
+export LESS='-R'
+export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'

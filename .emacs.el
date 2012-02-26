@@ -232,7 +232,7 @@
 (auto-image-file-mode t)
 
 ;;; auto insertion
-(auto-insert-mode t)
+(auto-insert-mode nil)
 (setq auto-insert-directory "~/.emacs.d/insert/")
 (define-auto-insert "\\.sh" "bash-template.sh")
           ; more insertion snipets come here...
@@ -471,7 +471,7 @@
 
 (add-hook 'c-mode-common-hook
     '(lambda ()
-       (setq compile-command "make -k -j")
+       (setq compile-command "make -k -j2")
        (setq compilation-window-height 10)
        ;; include
        (require 'vc-hooks)
@@ -490,7 +490,7 @@
        (setq compilation-read-command nil)
        ;; auto-saving when you make
        (setq compilation-ask-about-save nil)
-       (setq c-auto-newline nil)
+                     (setq c-auto-newline nil)
        (define-key c-mode-base-map "\C-z\C-u" 'imenu)
        (define-key c-mode-base-map "\C-t" 'fold-dwim-toggle)
        (define-key c-mode-base-map "\C-z\C-j" 'se/make-summary-buffer)
@@ -878,3 +878,6 @@
 (defun turn-on-paredit () (paredit-mode 1))
 (add-hook 'clojure-mode-hook 'turn-on-paredit)
 
+;; arduino
+(add-to-list 'load-path "~/.emacs.d/elisp")
+(require 'arduino-mode)
