@@ -223,3 +223,9 @@ zstyle ':completion:*' group-name ''
 
 export LESS='-R'
 export LESSOPEN='| /usr/share/source-highlight/src-hilite-lesspipe.sh %s'
+
+_Z_CMD=j
+source ~/.zsh.d/z/z.sh
+precmd() {
+  _z --add "$(pwd -P)"
+}

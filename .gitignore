@@ -5,7 +5,8 @@
 !/.zshrc
 !/.zshrc_aliases
 !/.zshenv
-!/.zsh.d/*
+!/.zsh.d/
+!/.zsh.d/z/*
 !/.zsh.d
 !/.profile
 !/.bashrc

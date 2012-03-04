@@ -350,6 +350,7 @@
     ("\\.cgi$"      . perl-mode)
     ("\\.perl$"    . perl-mode)
     ("\\.yaml"     .yaml-mode)
+    ("\\.yml"     .yaml-mode)
     ("\\.rb"     .ruby-mode)
     ) auto-mode-alist))
 
