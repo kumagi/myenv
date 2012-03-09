@@ -1,37 +1,64 @@
 import msgpack
 import msgpackya
 import random
-# pack: 20.0% PyUnicodeUCS2_EncodeUTF8
-# packya: 30.8% PyUnicodeUCS2_EncodeUTF8
 import time
+import sys
+
+mode=sys.argv[1]
 
 def pack_time(target, times):
-  begin = time.time()
-  for i in range(times):
-    msgpackya.packb(target)
-  ya = time.time() - begin
-  begin = time.time()
-  for i in range(times):
-    msgpack.packb(target)
-  org = time.time() - begin
-  #return None
-  return ("ya :"+str(ya), "org:"+str(org))
-elapsed = pack_time([], 1000)
-print("empty_list:",elapsed)
+  ya = org = None
+  if(mode == "kya" or mode == "comp"):
+    packya_packb = msgpackya.packb
+    begin = time.time()
+    for i in range(times):
+      packya_packb(target)
+    ya = time.time() - begin
 
-elapsed = pack_time([random.randint(0,x+1) for x in range(0,100000)], 100)
-print("100000_list:",elapsed)
+  if(mode == "orig" or mode == "comp"):
+    begin = time.time()
+    pack_packb = msgpack.packb
+    for i in range(times):
+      pack_packb(target)
+    org = time.time() - begin
+  if(mode == "comp"):
+     return ("msgpackya :"+str(ya), "cython:"+str(org))
+  return ya or org
+def unpack_time(target, times):
+  ya = org = None
+  if(mode == "kya" or mode == "comp"):
+    packed = msgpackya.packb(target)
+    packya_unpackb = msgpackya.unpackb
+    begin = time.time()
+    for i in range(times):
+      packya_unpackb(packed)
+    ya = time.time() - begin
 
+  if(mode == "orig" or mode == "comp"):
+    packed = msgpack.packb(target)
+    pack_packb = msgpack.packb
+    begin = time.time()
+    for i in range(times):
+      pack_packb(target)
+    org = time.time() - begin
+  if(mode == "comp"):
+     return ("msgpackya :"+str(ya), "cython:"+str(org))
+  return ya or org
+
+int_list = [x for x in range(10000)]
 dict_example = {}
-for x in [x for x in range(0,1000)]:
+for x in [x for x in range(0,10000)]:
   dict_example[x] = x*x
-elapsed = pack_time(dict_example, 100)
-print("10000_dict:",elapsed)
+bigstring = "a"*100000000
+shortstring = ["x"*random.randint(100,200) for x in range(10000)]
+items = {"empty":[[], 100000],
+         "int":[int_list, 10],
+         "dict":[dict_example, 100],
+         "bigstring":[bigstring, 1],
+         "shortstring":[shortstring, 10]}
 
-long_string = "a"*10000000
-elapsed = pack_time(long_string, 100)
-print("long_string:",elapsed)
-
-short_string_list = ["x"*random.randint(100,200) for x in range(10000)]
-elapsed = pack_time(short_string_list,100)
-print("short_string_list:",elapsed)
+item = list(set(items.keys()).intersection(set(sys.argv)))[0]
+pack_elapsed = pack_time(items[item][0], items[item][1])
+unpack_elapsed = unpack_time(items[item][0], items[item][1])
+print("pack:"+item+":", pack_elapsed)
+print("unpack:"+item+":", unpack_elapsed)
