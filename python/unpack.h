@@ -21,8 +21,6 @@
 typedef int unpack_user;
 #define msgpack_unpack_user unpack_user
 
-// PyObject* gc = PyImport_ImportModule("gc");
-
 static inline PyObject* template_callback_root(unpack_user* u)
 { return Py_None; }
 
@@ -112,7 +110,6 @@ static PyObject* msgpack_unpackb(PyObject* self, PyObject* target)
 
   PyObject* result = template_data(&ctx);
 
-  printf("%s\n", result->ob_type->tp_name);
   return result;
 }
 
