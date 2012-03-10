@@ -3,6 +3,8 @@
 
 #include "Python.h"
 #include "python_switch.h"
+//(setq compile-command "tox && notify-send 'ok' || nofity-send 'ng'")
+
 /* unpack */
 
 #include "msgpack/unpack_define.h"
@@ -18,6 +20,8 @@
 
 typedef int unpack_user;
 #define msgpack_unpack_user unpack_user
+
+// PyObject* gc = PyImport_ImportModule("gc");
 
 static inline PyObject* template_callback_root(unpack_user* u)
 { return Py_None; }
@@ -61,10 +65,22 @@ static inline int template_callback_array_item(unpack_user* u, PyObject** c, PyO
 }
 
 static inline int template_callback_map(unpack_user* u, unsigned int n, PyObject** o)
-{ *o = PyDict_New(); return 0; }
+{
+  PyObject *p = PyDict_New();
+  if(!p){ return -1;}
+  *o = p;
+  return 0;
+}
 
 static inline int template_callback_map_item(unpack_user* u, PyObject** c, PyObject* k, PyObject* v)
-{ PyDict_SetItem(*c, k, v); return 0; }
+{
+  if (PyDict_SetItem(*c, k, v) == 0) {
+    Py_DECREF(k);
+    Py_DECREF(v);
+    return 0;
+  }
+  return -1;
+}
 
 static inline int template_callback_raw(unpack_user* u, const char* b, const char* p, unsigned int l, PyObject** o)
 {
@@ -88,15 +104,15 @@ static PyObject* msgpack_unpackb(PyObject* self, PyObject* target)
   if(!PyBytes_Check(target)){
     printf("invalid type");
   }
-  PyBytesObject* bytes = (PyBytesObject*)target;
   size_t offset = 0;
-
 	msgpack_unpack_t ctx;
   template_init(&ctx);
 
-  template_execute(&ctx, PyBytes_AS_STRING(bytes), PyBytes_GET_SIZE(target), &offset);
+  template_execute(&ctx, PyBytes_AS_STRING(target), PyBytes_GET_SIZE(target), &offset);
 
   PyObject* result = template_data(&ctx);
+
+  printf("%s\n", result->ob_type->tp_name);
   return result;
 }
 

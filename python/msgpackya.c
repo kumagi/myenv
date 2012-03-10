@@ -43,6 +43,7 @@ static PyMethodDef msgpack_methods[] = {
   {0,0,0,0} // sentinel
 };
 
+
 #ifdef PY3
 static struct PyModuleDef core_module_def = {
   PyModuleDef_HEAD_INIT,

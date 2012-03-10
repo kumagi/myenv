@@ -1,5 +1,6 @@
 #ifndef PACK_H
 #define PACK_H
+//(setq compile-command "tox && notify-send 'ok' || nofity-send 'ng'")
 
 #include "Python.h"
 #include "python_switch.h"
@@ -135,6 +136,15 @@ static void msgpackya_pack_int(msgpack_packer* p, PyObject* target)
     msgpackya_pack_bool(p, target);
     return;
   }
+#ifdef PYPY
+  if(PyInt_Check(target)){
+    const long var = PyInt_AsLong(target);
+    msgpack_pack_int32(p, var);
+  }else if(PyLong_Check(target)){
+    const long long var = PyInt_AsLong(target);
+    msgpack_pack_int64(p, var);
+  }
+#else
 # ifndef PY3 /* Py3 uses PyLong only */
   if(PyLong_Check(target)){
 # endif
@@ -168,6 +178,7 @@ static void msgpackya_pack_int(msgpack_packer* p, PyObject* target)
     exit(1);
   }
 # endif /* PY3 */
+#endif /* PYPY */
 }
 
 /* float (actually double)*/
@@ -195,12 +206,11 @@ static void msgpack_pack_object(msgpack_packer* p, PyObject* target);
 /* list */
 static void msgpackya_pack_list(msgpack_packer* p, PyObject* target)
 {
-  PyListObject* py_list = (PyListObject*)target;
-  const int size = PyList_GET_SIZE(py_list);
+  const int size = PyList_GET_SIZE(target);
   msgpack_pack_array(p, size);
   int i;
   for(i=0; i<size; ++i){
-    msgpack_pack_object(p, PyList_GET_ITEM(py_list, i));
+    msgpack_pack_object(p, PyList_GET_ITEM(target, i));
   }
 }
 

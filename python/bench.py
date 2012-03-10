@@ -1,5 +1,3 @@
-import msgpack
-import msgpackya
 import random
 import time
 import sys
@@ -8,7 +6,22 @@ mode=sys.argv[1]
 
 def pack_time(target, times):
   ya = org = None
+  if(mode == "pypy"):
+    import msgpackya
+    packya_packb = msgpackya.packb
+    begin = time.time()
+    for i in range(times):
+      packya_packb(target)
+    ya = time.time() - begin
+  if(mode == "pure"):
+    import msgpack_pure
+    packya_packb = msgpack_pure.packb
+    begin = time.time()
+    for i in range(times):
+      packya_packb(target)
+    ya = time.time() - begin
   if(mode == "kya" or mode == "comp"):
+    import msgpackya
     packya_packb = msgpackya.packb
     begin = time.time()
     for i in range(times):
@@ -17,6 +30,7 @@ def pack_time(target, times):
 
   if(mode == "orig" or mode == "comp"):
     begin = time.time()
+    import msgpack
     pack_packb = msgpack.packb
     for i in range(times):
       pack_packb(target)
@@ -27,6 +41,7 @@ def pack_time(target, times):
 def unpack_time(target, times):
   ya = org = None
   if(mode == "kya" or mode == "comp"):
+    import msgpackya
     packed = msgpackya.packb(target)
     packya_unpackb = msgpackya.unpackb
     begin = time.time()
@@ -35,6 +50,7 @@ def unpack_time(target, times):
     ya = time.time() - begin
 
   if(mode == "orig" or mode == "comp"):
+    import msgpack
     packed = msgpack.packb(target)
     pack_packb = msgpack.packb
     begin = time.time()
