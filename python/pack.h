@@ -2,126 +2,20 @@
 #define PACK_H
 //(setq compile-command "tox && notify-send 'ok' || nofity-send 'ng'")
 
-#include "Python.h"
+#include <Python.h>
+#include "packer.h"
 #include "python_switch.h"
-#include <longintrepr.h>
 #include "alt_malloc.h"
-#include "msgpack/pack_define.h"
-
-#define msgpack_pack_inline_func(name) \
-	static inline void msgpack_pack ## name
-
-#define msgpack_pack_inline_func_cint(name) \
-	static inline void msgpack_pack ## name
-
-#define msgpack_pack_user msgpack_packer*
-
-#define msgpack_pack_append_buffer(user, buf, len) \
-  (*user->callback)(user->data, buf, len)
-
-typedef struct {
-	size_t size;
-	char* data;
-	size_t alloc;
-} py_buffer_t;
-
-#ifndef NDEBUG
-static void dump_pbuf(void* b){
-  const py_buffer_t* const pbuf = (py_buffer_t*)b;
-  size_t i;
-  printf("0x");
-  for(i = 0; i < pbuf->size; ++i){
-    printf("%02x", pbuf->data[i] & 255);
-  }
-  printf("\n");
-}
-
-static void dump_buf(const void* b, int len){
-  const char* const buf = (char*)b;
-  int i;
-  printf("0x");
-  for(i = 0; i < len; ++i){
-    printf("%02x", buf[i] & 255);
-  }
-  printf("\n");
-}
-#endif
-
-typedef int (*msgpack_packer_write)(void* data, const uint8_t* buf, unsigned int len);
-typedef struct {
-	void* data;
-	msgpack_packer_write callback;
-} msgpack_packer;
-
-#include "msgpack/pack_template.h"
-
-static int msgpack_python_buffer_write(void* data, const uint8_t* buf, unsigned int len);
 
 #include <stdio.h>
 
-#define get_typename(x) Py_TYPE(x)->tp_name
-#ifdef PY3
-#define get_ob_size(x) ((PyVarObject*)x)->ob_size
-#else
-#define get_ob_size(x) ((PyVarObject*)x)->ob_size
-#endif
-#define MSGPACK_INITIAL_BUFFER_SIZE 4096
-
-static inline void pbuf_init(py_buffer_t* const buf)
+static inline void buffer_free(buffer* const p)
 {
-  buf->size = 0;
-  buf->alloc = MSGPACK_INITIAL_BUFFER_SIZE;
-  buf->data = (char*)alt_malloc(MSGPACK_INITIAL_BUFFER_SIZE);
-	memset(buf->data, 0, sizeof(MSGPACK_INITIAL_BUFFER_SIZE));
-}
-static inline void pbuf_free(py_buffer_t* const buf)
-{
-  alt_free(buf->data);
-}
-
-static inline void msgpack_packer_pbuf_init(msgpack_packer* const p)
-{
-  p->data = alt_malloc(sizeof(py_buffer_t));
-  pbuf_init((py_buffer_t*)p->data);
-  p->callback = msgpack_python_buffer_write;
-}
-
-static inline const char* msgpack_packer_pbuf_buff(msgpack_packer* const p)
-{
-  return ((const py_buffer_t*)p->data)->data;
-}
-static inline size_t msgpack_packer_pbuf_size(msgpack_packer* const p)
-{
-  return ((const py_buffer_t*)p->data)->size;
-}
-
-static inline void msgpack_packer_pbuf_free(msgpack_packer* const p)
-{
-  pbuf_free((py_buffer_t*)p->data);
+  packer_delete((PyObject*)p->data);
 	alt_free(p->data);
 }
 
-// typedef int (*msgpack_packer_write)(void* data, const char* buf, unsigned int len);
-static int msgpack_python_buffer_write(void* data, const uint8_t* buf, unsigned int len)
-{
-	py_buffer_t* pbuf = (py_buffer_t*)data;
-	if(pbuf->alloc - pbuf->size < len) {
-		size_t nsize = (pbuf->alloc) ? pbuf->alloc * 2 : MSGPACK_INITIAL_BUFFER_SIZE;
-
-		while(nsize < pbuf->size + len) { nsize *= 2; }
-
-		void* const tmp = alt_realloc(pbuf->data, nsize);
-		if(!tmp) { return -1; }
-		pbuf->data = (char*)tmp;
-		pbuf->alloc = nsize;
-	}
-
-	memcpy(pbuf->data + pbuf->size, buf, len);
-	pbuf->size += len;
-	return 0;
-}
-
-static void msgpackya_pack_bool(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_bool(buffer* p, PyObject* target)
 {
   if(target == Py_True){
     msgpack_pack_true(p);
@@ -130,7 +24,7 @@ static void msgpackya_pack_bool(msgpack_packer* p, PyObject* target)
   }
 }
 
-static void msgpackya_pack_int(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_int(buffer* p, PyObject* target)
 {
   if(PyBool_Check(target)){
     msgpackya_pack_bool(p, target);
@@ -182,29 +76,29 @@ static void msgpackya_pack_int(msgpack_packer* p, PyObject* target)
 }
 
 /* float (actually double)*/
-static void msgpackya_pack_float(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_float(buffer* p, PyObject* target)
 {
   msgpack_pack_double(p, PyFloat_AS_DOUBLE(target));
 }
 
 /* bytes */
-static void msgpackya_pack_bytes(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_bytes(buffer* p, PyObject* target)
 {
   msgpack_pack_raw(p, PyBytes_GET_SIZE(target));
   msgpack_pack_raw_body(p, PyBytes_AS_STRING(target), PyBytes_GET_SIZE(target));
 }
 
 /* unicode */
-static void msgpackya_pack_unicode(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_unicode(buffer* p, PyObject* target)
 {
   PyObject* py_str = PyUnicode_AsEncodedString(target, "utf-8", "error");
   msgpackya_pack_bytes(p, py_str);
 }
 
-static void msgpack_pack_object(msgpack_packer* p, PyObject* target);
+static void msgpack_pack_object(buffer* p, PyObject* target);
 
 /* list */
-static void msgpackya_pack_list(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_list(buffer* p, PyObject* target)
 {
   const int size = PyList_GET_SIZE(target);
   msgpack_pack_array(p, size);
@@ -215,7 +109,7 @@ static void msgpackya_pack_list(msgpack_packer* p, PyObject* target)
 }
 
 /* tuple */
-static void msgpackya_pack_tuple(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_tuple(buffer* p, PyObject* target)
 {
   /* head */
   const int size = PyTuple_GET_SIZE(target);
@@ -229,7 +123,7 @@ static void msgpackya_pack_tuple(msgpack_packer* p, PyObject* target)
 }
 
 /* dict */
-static void msgpackya_pack_dict(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_dict(buffer* p, PyObject* target)
 {
   /* head */
   const Py_ssize_t size = PyDict_Size(target);
@@ -245,14 +139,14 @@ static void msgpackya_pack_dict(msgpack_packer* p, PyObject* target)
 }
 
 /* bytearray */
-static void msgpackya_pack_bytearray(msgpack_packer* p, PyObject* target)
+static void msgpackya_pack_bytearray(buffer* p, PyObject* target)
 {
   const int size = PyByteArray_GET_SIZE(target);
   msgpack_pack_raw(p, size);
   msgpack_pack_raw_body(p, PyByteArray_AS_STRING(target), size);
 }
 
-static void msgpack_pack_object(msgpack_packer* p, PyObject* target)
+static void msgpack_pack_object(buffer* p, PyObject* target)
 {
   //const char* const typename = get_typename(target);
   //printf("packing packer <- %s\n", typename);
@@ -281,23 +175,47 @@ static PyObject* msgpack_packb(PyObject* self,PyObject *target)
 {
   assert(target != NULL);
 
-  msgpack_packer p;
-  msgpack_packer_pbuf_init(&p);
+  buffer b;
+  Packer p;
+  init_packer(&p, NULL, NULL);
 
-  msgpack_pack_object(&p, target);
+  buffer_init(&b, &p, msgpack_python_buffer_write);
 
-  //dump_pbuf(p.data);
-  //printf("packed %zd data\n", msgpack_packer_pbuf_size(&p));
-  PyObject* result = PyBytes_FromStringAndSize(msgpack_packer_pbuf_buff(&p),
-                                               msgpack_packer_pbuf_size(&p));
+  /* pack */
+  msgpack_pack_object(&b, target);
+
+  PyObject* result = PyBytes_FromStringAndSize((char*)buffer_data(&b),
+                                               buffer_size(&b));
+
   /*
   printf("PyObject(%p):refcnt(%ld):ob_type:(%p)\n",
          result, result->ob_refcnt, result->ob_type);
   //*/
 
   /* copy to PyStringObject */
-  msgpack_packer_pbuf_free(&p);
+  packer_delete((PyObject*)&p);
   return result;
 }
+
+static PyObject* packer_pack(PyObject* packer, PyObject* target){
+  assert(packer != NULL);
+  Packer* p = (Packer*)packer;
+  buffer b;
+  buffer_init(&b, p, msgpack_python_buffer_write);
+
+  /* pack */
+  msgpack_pack_object(&b, target);
+  PyObject* result = PyBytes_FromStringAndSize((char*)buffer_data(&b),
+                                               buffer_size(&b));
+
+  /*
+  printf("PyObject(%p):refcnt(%ld):ob_type:(%p)\n",
+         result, result->ob_refcnt, result->ob_type);
+  //*/
+  clear_packer(p);
+
+  return result;
+}
+
 
 #endif

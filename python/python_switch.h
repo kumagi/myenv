@@ -13,9 +13,13 @@
 #  define PY3
 #  define INITERROR return NULL
 #  define PyInt_Check PyLong_Check
+#  define Py_TPFLAGS_CHECKTYPES 0
+#  define Py_TPFLAGS_HAVE_INDEX 0
 # else
 #  define INITERROR return
 # endif
 #endif
 
 #endif /* PYTHON_SWITCH_H */
+
+

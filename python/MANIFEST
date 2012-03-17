@@ -1,7 +1,9 @@
 msgpackya.c
 python_switch.h
 alt_malloc.h
+packer.h
 pack.h
+unpacker.h
 unpack.h
 setup.py
 test.py

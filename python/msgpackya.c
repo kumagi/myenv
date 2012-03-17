@@ -1,4 +1,4 @@
-/* -*- Mode: C; tab-width: 2; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* -*- Mode: C; tab-width: 2; c-basic-offset: 2; indent-tabs-mode: nil; compile-command: "tox" -*- */
 #include <Python.h>
 #include <assert.h>
 #define __STDC_FORMAT_MACROS
@@ -6,14 +6,12 @@
 //(setq compile-command "tox && notify-send 'ok' || nofity-send 'ng'")
 //(setq compile-command "make profile")
 #include "python_switch.h"
-#include "alt_malloc.h"
 #include "pack.h"
 #include "unpack.h"
-
-
+/* c */
 char* const name = "msgpackya";
-static PyMethodDef msgpack_methods[] = {
-  {"pack", (PyCFunction)msgpack_packb, METH_VARARGS,
+static PyMethodDef module_methods[] = {
+  {"pack", (PyCFunction)msgpack_packb, METH_O,
       "pack(o, stream)\n"
       "pack an object `o` and write it to stream."},
   {"packb",(PyCFunction)msgpack_packb, METH_O,
@@ -43,33 +41,49 @@ static PyMethodDef msgpack_methods[] = {
   {0,0,0,0} // sentinel
 };
 
-
 #ifdef PY3
 static struct PyModuleDef core_module_def = {
   PyModuleDef_HEAD_INIT,
   "msgpackya",
   NULL,
   -1,
-  msgpack_methods,
+  module_methods,
 };
 #endif
 
 #ifdef PY3
-PyObject* PyInit_msgpackya(void) {
+# define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
 #else
-PyMODINIT_FUNC initmsgpackya(void) {
+# define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
 #endif
 
+MOD_INIT(msgpackya){
   PyObject *m;
 #ifdef PY3
   m = PyModule_Create(&core_module_def);
 #else
-  m = Py_InitModule3(name, msgpack_methods, "");
+  m = Py_InitModule3(name, module_methods, "");
 #endif
+
 
   if(m == NULL){
     INITERROR;
   }
+
+  /* Packer */
+  if (PyType_Ready(&packerType) < 0){
+    return;
+  }
+  Py_INCREF(&packerType);
+  PyModule_AddObject(m, "Packer", (PyObject *)&packerType);
+
+  /* Unpacker */
+  if (PyType_Ready(&unpackerType) < 0){
+    return;
+  }
+  Py_INCREF(&unpackerType);
+  PyModule_AddObject(m, "Unpacker", (PyObject *)&unpackerType);
+
 
 #ifdef PY3
   return m;
