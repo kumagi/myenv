@@ -194,13 +194,17 @@ static int msgpack_python_buffer_write(void* data, const uint8_t* buf, unsigned 
 {
 	Packer* packer = (Packer*)data;
 	if(packer->alloc - packer->size < len) {
+#if 0
 		size_t nsize = (packer->alloc) ? packer->alloc * 2 : MSGPACK_INITIAL_BUFFER_SIZE;
-
 		while(nsize < packer->size + len) { nsize *= 2; }
-
 		void* const tmp = alt_realloc(packer->data, nsize);
 		if(!tmp) { return -1; }
 		packer->data = (char*)tmp;
+#endif
+    size_t nsize = (packer->alloc + len) * 2;
+    void* const tmp = alt_realloc(packer->data, nsize);
+    if(!tmp)return -1;
+    packer->data = (char*)tmp;
 		packer->alloc = nsize;
 	}
 

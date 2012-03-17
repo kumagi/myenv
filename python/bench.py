@@ -61,14 +61,15 @@ def unpack_time(target, times):
      return ("msgpackya :"+str(ya), "cython:"+str(org))
   return ya or org
 
-int_list = [x for x in range(10000)]
+int_list = [x for x in range(1000)]
 dict_example = {}
 for x in [x for x in range(0,10000)]:
   dict_example[x] = x*x
 bigstring = "a"*100000000
-shortstring = ["x"*random.randint(100,200) for x in range(10000)]
-items = {"empty":[[], 100000],
-         "int":[int_list, 10],
+shortstring = ["x"*random.randint(100,200) for x in range(100000)]
+items = {"empty":[[], 1000000],
+         "one":[1, 1000000],
+         "intlist":[int_list, 20000],
          "dict":[dict_example, 100],
          "bigstring":[bigstring, 1],
          "shortstring":[shortstring, 10]}

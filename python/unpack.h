@@ -5,6 +5,7 @@
 #include <Python.h>
 #include "unpacker.h"
 #include "python_switch.h"
+#include "alt_malloc.h"
 //(setq compile-command "tox && notify-send 'ok' || nofity-send 'ng'")
 
 /* unpack */
@@ -20,8 +21,64 @@
 #define msgpack_unpack_struct(name) \
 	struct template ## name
 
-typedef int unpack_user;
+#define USERDATA_DEFLEN 32
+typedef struct {
+  uint32_t target;
+  uint32_t filled;
+} array_fill;
+
+typedef struct {
+  array_fill* counter_head;
+  array_fill counter[USERDATA_DEFLEN];
+  uint32_t index;
+  uint32_t max;
+} unpack_user;
 #define msgpack_unpack_user unpack_user
+
+void init_userdata(unpack_user* usr)
+{
+  usr->counter_head = usr->counter;
+  usr->index = 0;
+  usr->max = USERDATA_DEFLEN;
+}
+void delete_userdata(unpack_user* usr)
+{
+  if(usr->counter_head != usr->counter){
+    alt_free(usr->counter_head);
+  }
+  return;
+}
+void dump_userdata(unpack_user* usr)
+{
+  fprintf(stderr, "counter_head: %p index:%u max:%u\n"
+          ,usr->counter_head
+          ,usr->index
+          ,usr->max);
+}
+
+void new_array_userdata(unpack_user* usr, uint32_t len)
+{
+  usr->index += 1;
+  if(usr->max == usr->index){
+    array_fill* new_buff = (array_fill*)alt_malloc(sizeof(array_fill)*usr->max*2);
+    memcpy(new_buff, usr->counter_head, usr->index);
+    fprintf(stderr,"extended\n");
+  }
+  //  dump_userdata(usr);
+  usr->counter_head[usr->index].target = len;
+  usr->counter_head[usr->index].filled = 0;
+}
+uint32_t get_arrays_last_index_userdata(unpack_user* usr)
+{
+  return usr->counter_head[usr->index].filled;
+}
+
+void fill_userdata(unpack_user* usr){
+  usr->counter_head[usr->index].filled += 1;
+  if(usr->counter_head[usr->index].filled == usr->counter_head[usr->index].target){
+    usr->index -= 1;
+  }
+}
 
 static inline PyObject* template_callback_root(unpack_user* u)
 { return Py_None; }
@@ -51,14 +108,14 @@ create_Ulong(uint64)
 #define create_Int(int_type)\
   static inline int template_callback_ ## int_type(unpack_user* u, int_type ## _t d, PyObject** o) \
   {*o = PyInt_FromLong(d); return 0; }
-create_Long(int8)
-create_Long(int16)
-create_Long(int32)
+create_Int(int8)
+create_Int(int16)
+create_Int(int32)
 create_Long(int64)
-create_Long(uint8)
-create_Long(uint16)
-create_Long(uint32)
-create_Long(uint64)
+create_Int(uint8)
+create_Int(uint16)
+create_Int(uint32)
+create_Ulong(uint64)
 #undef create_PyInt
 #endif /* PY3 */
 
@@ -75,13 +132,17 @@ static inline int template_callback_nil(unpack_user* u, PyObject** o)
 { *o = Py_None; return 0; }
 
 static inline int template_callback_array(unpack_user* u, unsigned int n, PyObject** o)
-{ *o = PyTuple_New(n); return 0; }
+{
+  *o = PyTuple_New(n);
+  new_array_userdata(u,n);
+  return 0;
+}
 
 static inline int template_callback_array_item(unpack_user* u, PyObject** c, PyObject* o)
 {
-  Py_ssize_t i;
-  while(PyTuple_GET_ITEM(*c, i) != NULL) ++i;
+  uint32_t i = get_arrays_last_index_userdata(u);
   PyTuple_SET_ITEM(*c, i, o);
+  fill_userdata(u);
   return 0;
 }
 
@@ -127,14 +188,16 @@ static PyObject* msgpack_unpackb(PyObject* self, PyObject* target)
   }
   size_t offset = 0;
 	msgpack_unpack_t ctx;
+  init_userdata(&ctx.user);
   template_init(&ctx);
 
   template_execute(&ctx, PyBytes_AS_STRING(target), PyBytes_GET_SIZE(target), &offset);
 
   PyObject* result = template_data(&ctx);
-
+  delete_userdata(&ctx.user);
   return result;
 }
+
 
 static PyObject* unpacker_unpack(PyObject *self)
 {
@@ -145,6 +208,7 @@ static PyObject* unpacker_unpack(PyObject *self)
     PyErr_SetString(PyExc_StopIteration, "No more unpack data.");
     return NULL;
   }
+  init_userdata(&ctx.user);
   template_init(&ctx);
 
   //printf("rest buffer:%zd bytes ", unpacker->size - unpacker->consumed);
@@ -160,6 +224,8 @@ static PyObject* unpacker_unpack(PyObject *self)
   if(unpacker->size == unpacker->consumed){
     unpacker->size = unpacker->consumed = 0;
   }
+  delete_userdata(&ctx.user);
+
   return result;
 }
 
