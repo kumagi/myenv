@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 *
 !/.ssh/id_rsa.pub
 !/.emacs.el
@@ -12,3 +13,20 @@
 !/.bashrc
 !/.Xmodmap
 !/template.tex
+=======
+*.o
+*.so
+ruby/Makefile
+*.5
+*.8
+*.6
+_obj
+_test
+/csharp/MsgPack.suo
+/csharp/MsgPack/bin
+/csharp/MsgPack/obj
+/csharp/MsgPack/MsgPack.csproj.user
+/csharp/MsgPack.Test/obj
+/csharp/MsgPack.Test/bin
+/csharp/MsgPack.Test/MsgPack.Test.csproj.user
+>>>>>>> 83852fa285bed4d32c6e2c6c0a5f8d2ccf08546e
