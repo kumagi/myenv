@@ -65,21 +65,20 @@ MOD_INIT(msgpackya){
   m = Py_InitModule3(name, module_methods, "");
 #endif
 
-
   if(m == NULL){
     INITERROR;
   }
 
   /* Packer */
   if (PyType_Ready(&packerType) < 0){
-    return;
+    return NULL;
   }
   Py_INCREF(&packerType);
   PyModule_AddObject(m, "Packer", (PyObject *)&packerType);
 
   /* Unpacker */
   if (PyType_Ready(&unpackerType) < 0){
-    return;
+    return NULL;
   }
   Py_INCREF(&unpackerType);
   PyModule_AddObject(m, "Unpacker", (PyObject *)&unpackerType);

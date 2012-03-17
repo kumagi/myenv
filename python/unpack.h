@@ -212,10 +212,15 @@ static PyObject* unpacker_unpack(PyObject *self)
   template_init(&ctx);
 
   //printf("rest buffer:%zd bytes ", unpacker->size - unpacker->consumed);
-  //int before_consumed = unpacker->consumed;
-  template_execute(&ctx, unpacker->data,
+  int before_consumed = unpacker->consumed;
+  int executed = template_execute(&ctx, unpacker->data,
                    unpacker->size,
                    &unpacker->consumed);
+  if(executed != 1){
+    unpacker->consumed = before_consumed;
+    PyErr_SetString(PyExc_StopIteration, "No more unpack data.");
+    return NULL;
+  }
   //printf("consumed %zd bytes\n", unpacker->consumed - before_consumed);
   //unpacker_dump(self);
   //printf("\n");
