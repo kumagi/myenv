@@ -364,7 +364,7 @@
          (local-file  (file-relative-name
                        temp-file
                        (file-name-directory buffer-file-name))))
-    (list "g++" (list "-Wall" "-mmmx" "-msse" "-msse2" "-Wextra" "-fsyntax-only" "-std=gnu++0x" "-I." "-I/usr/include/qt4/QtCore" "-I/usr/include/qt4/QtGui" "-I/usr/include/qt4" "-I/usr/share/qt4/mkspecs/linux-g++" "-I/usr/include/wireshark" "-I/usr/include/wireshark/epan" "-I/usr/include/wireshark/wiretap" "-I/usr/include/wireshark/wsutil" "-I/usr/include/python2.6" "-I/usr/include/glib-2.0" local-file))))
+    (list "g++" (list "-Wall" "-mmmx" "-msse" "-msse2" "-Wextra" "-fsyntax-only" "-std=gnu++0x" "-I." "-I../" "-I/usr/include/qt4/QtCore" "-I/usr/include/qt4/QtGui" "-I/usr/include/qt4" "-I/usr/share/qt4/mkspecs/linux-g++" "-I/usr/include/wireshark" "-I/usr/include/wireshark/epan" "-I/usr/include/wireshark/wiretap" "-I/usr/include/wireshark/wsutil" "-I/usr/include/python2.6" "-I/usr/include/glib-2.0" local-file))))
 
 ;; ruby
 (setq load-path (cons "~/.emacs.d/ruby/" load-path))
