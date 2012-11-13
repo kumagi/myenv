@@ -48,6 +48,7 @@ export PIP_RESPECT_VIRTUALENV=true
 export QTDIR=/usr/lib/qt4
 export SAKURA=182.48.52.238
 export PATH=$PATH:~/bin
+export PATH=$PATH:~/.cabal/bin
 # alias
 [ -f ~/.zshrc_aliases ] && source ~/.zshrc_aliases
 

@@ -12,3 +12,17 @@
 !/.bashrc
 !/.Xmodmap
 !/template.tex
+*~
+*.o
+*.pyc
+*.gch
+*.out
+build/
+.waf-*
+.waf3-*
+.lock-*
+.DS_Store
+cscope.*
+callgrind.*
+.unittest-gtest
+*.tar.gz
