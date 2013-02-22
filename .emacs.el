@@ -16,6 +16,8 @@
 (column-number-mode 1)
 (transient-mark-mode 1)
 (blink-cursor-mode 0)
+(setq make-backup-files nil)
+(setq auto-save-default nil)
 (when (or window-system (eq emacs-major-version '21))
   (setq font-lock-support-mode
         (if (fboundp 'jit-lock-mode) 'jit-lock-mode 'lazy-lock-mode))
@@ -31,6 +33,9 @@
 (define-key global-map (kbd "C-z") nil)
 (global-set-key (kbd "C-z C-r") 'revert-buffer)
 (global-set-key (kbd "M-g") 'goto-line)
+;(setq grep-command "find -name \"*.[ch]\" -print | xargs grep -n ")
+(setq grep-command '("grep -nH -r -e  . 2> /dev/null" . 16))
+(define-key global-map (kbd "C-M-g") 'grep)
 
 ;;2tab
 (setq-default indent-tabs-mode nil)
@@ -93,6 +98,12 @@
 (package-initialize)
 
 (require 'gtags)
+(setq gtags-mode-hook
+      '(lambda ()
+         (local-set-key "\M-." 'gtags-find-tag)
+         (local-set-key "\M-r" 'gtags-find-rtag)
+         (local-set-key "\M-s" 'gtags-find-symbol)
+         (local-set-key "\M-*" 'gtags-pop-stack)))
 
 (require 'mic-paren)
 (setq paren-match-face 'bold
@@ -122,38 +133,34 @@
     ("Cakefile$"     . coffee-mode)
     ("\\.coffee$"     . coffee-mode)
     ("\\.rb$"     . ruby-mode)
+    ("Gemfile"     . ruby-mode)
+    ("Rakefile"     . ruby-mode)
     ) auto-mode-alist))
 (require 'coffee-mode)
 ;; c
 
 (require 'flymake)
-(defun flymake-cc-init ()
-  (let* ((temp-file   (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-         (local-file  (file-relative-name
-                       temp-file
-                       (file-name-directory buffer-file-name))))
-    (list "g++" (list "-Wall" "-mmmx" "-msse" "-msse2" "-Wextra" "-fsyntax-only" "-std=gnu++0x" "-I." local-file))))
+;(require 'google-c-style)
 
+;(add-hook 'c-mode-common-hook 'google-set-c-style)
+;(add-hook 'c-mode-common-hook 'google-make-newline-indent)
 
-(push '("\\.cc$" flymake-cc-init) flymake-allowed-file-name-masks)
-(push '("\\.cpp$" flymake-cc-init) flymake-allowed-file-name-masks)
-(push '("\\.hpp$" flymake-cc-init) flymake-allowed-file-name-masks)
-(push '("\\.h$" flymake-cc-init) flymake-allowed-file-name-masks)
 (add-hook 'c-mode-common-hook
     '(lambda ()
+       (setq c-basic-offset 2)
+       (setq c++-basic-offset 2)
        (setq compile-command "./waf --check")
        (setq compilation-window-height 10)
        ;; include
-       (require 'vc-hooks)
+       ;(require 'vc-hooks)
        (require 'hideshow)
-       (flymake-mode t)
-       (hs-minor-mode t)
+       ;(flymake-mode t)
        (which-func-mode 1)
        (setq which-func-mode t)
        (delete (assoc 'which-func-mode mode-line-format) mode-line-format)
        (setq-default header-line-format '(which-func-mode ("" which-func-format)))
        (setq completion-mode t)
+       (gtags-mode 1)
        (setq gtags-path-style 'relative)
        ;; do not ask for make's option.
        (setq compilation-read-command nil)
@@ -166,16 +173,26 @@
 (add-hook 'c++-mode-hook
     '(lambda ()
        ;;indent
-       (c-set-style "stroustrup")
-       (c-set-offset 'access-label '-)
-       (c-set-offset 'arglist-close 0)
+       (setq c-basic-offset 2)
+       ;(c-set-style "stroustrup")
        (c-set-offset 'arglist-cont 0)
+       (c-set-offset 'access-label '1)
+       (c-set-offset 'arglist-close 0)
        (c-set-offset 'arglist-intro '+)
        (c-set-offset 'inline-open 0)
+       (c-set-offset 'stream-op '+)
+       (gtags-mode 1)
+       (gtags-path-style)
        (setq c-basic-offset 2)
        (setq tab-width 2)
        (c-set-offset 'innamespace 0)
-       (c-set-offset 'arglist-close 0)))
+       (c-set-offset 'arglist-close 0)
+       ))
+(add-hook 'c++-mode-hook
+  (function (lambda ()
+              (define-key c++-mode-map "\C-c\C-p" 'ff-find-other-file)
+              (define-key c++-mode-map "\C-c\C-n" 'ff-find-other-file)
+)))
 
 ;; OCaml
 
@@ -248,9 +265,10 @@
  '(trailing-whitespace ((t (:background "#FFD0D0"))))
  '(font-lock-builtin-face ((t (:foreground "#3191A3" :weight bold))))
  '(font-lock-comment-delimiter-face ((t (:foreground "#2dAbAb" :inherit font-lock-comment-face))))
- '(font-lock-comment-face ((t (:foreground "#2dAbCb"))))
+ '(font-lock-comment-face ((t (:foreground "#2CA"))))
  '(font-lock-constant-face ((t (:foreground "#DF7921" :weight bold))))
- '(font-lock-function-name-face ((t (:foreground "#01C1FF" :wight bold))))
+ '(font-lock-function-name-face ((t (:foreground "#6BF" :wight bold))))
+; '(font-lock-function-name-face ((t (:foreground "#FA0" :wight bold))))
  '(font-lock-keyword-face ((t (:foreground "#4856F7" :weight bold))))
  '(font-lock-preprocessor-face ((t (:foreground "#48FF37"))))
  '(font-lock-regexp-grouping-backslash ((t (:inherit bold :foreground "#666666"))))
@@ -271,7 +289,7 @@
  '(compilation-line-number ((t (:foreground "#EC9EBA"))))
  '(glyphless-char ((t (:background "#4F4D4D"))))
  '(lazy-highlight ((t (:background "#505740"))))
- '(default ((t (:background "#00121A" :foreground "#DADADA"))))
+ '(default ((t (:background "#000210" :foreground "#DDD"))))
  '(rainbow-delimiters-depth-1-face ((((background dark)) (:foreground "white"))))
  '(rainbow-delimiters-depth-2-face ((((background dark)) (:foreground "orange"))))
  '(rainbow-delimiters-depth-3-face ((((background dark)) (:foreground "yellow"))))
@@ -293,21 +311,21 @@
     (setcar (cdr elem) "")))
 
 ;; modeline
-(require 'sml-modeline)
-(sml-modeline-mode 1)
-(set-face-background 'sml-modeline-end-face "#009EFF")
-(set-face-background 'sml-modeline-vis-face "LightYellow4")
+;(require 'sml-modeline)
+;(sml-modeline-mode 1)
+;(set-face-background 'sml-modeline-end-face "#009EFF")
+;(set-face-background 'sml-modeline-vis-face "LightYellow4")
 
 ;; git
 (require 'git-commit-mode)
 (require 'gitignore-mode)
 
 ;; google
-(require 'google-translate)
-(setq google-translate-default-source-language "en")
-(setq google-translate-default-target-language "ja")
-(global-set-key (kbd "\C-ct") 'google-translate-at-point)
-(global-set-key (kbd "\C-cT") 'google-translate-at-point-reverse)
+;(require 'google-translate)
+;(setq google-translate-default-source-language "en")
+;(setq google-translate-default-target-language "ja")
+;(global-set-key (kbd "\C-ct") 'google-translate-at-point)
+;(global-set-key (kbd "\C-cT") 'google-translate-at-point-reverse)
 
 
 ;; hungry delete
@@ -370,7 +388,8 @@
 ;; haml
 (require 'haml-mode)
 (require 'sass-mode)
-
+;; slim
+(require 'slim-mode)
 
 
 ;; untabify
@@ -384,3 +403,85 @@
                    (interactive)
                    (tabify 0 (point-max))
                    (message "tabify done.")))
+
+
+;; japanese
+(require 'mozc)
+(set-language-environment "Japanese")
+(setq default-input-method "japanese-mozc")
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-buffer-file-coding-system 'utf-8)
+(setq default-buffer-file-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+
+(require 'powerline)
+(powerline-default-center)
+(setq powerline-arrow-shape 'arrow14)
+
+(make-face 'mode-line-color-1)
+(set-face-attribute 'mode-line-color-1 nil
+                    :foreground "#fff"
+                    :background "#043")
+(make-face 'mode-line-color-2)
+(set-face-attribute 'mode-line-color-2 nil
+                    :foreground "#fff"
+                    :background "#032")
+(make-face 'mode-line-color-3)
+(set-face-attribute 'mode-line-color-3 nil
+                    :foreground "#000"
+                    :background "#fff")
+(set-face-attribute 'mode-line nil
+                    :foreground "#fee"
+                    :background "#359"
+                    :box nil)
+(set-face-attribute 'mode-line-inactive nil
+                    :foreground "#fff"
+                    :background "#274")
+
+(require 'tramp)
+(setq tramp-default-method "ssh")
+
+;; clojure
+(require 'nrepl)
+(when (not package-archive-contents)
+  (package-refresh-contents))
+(defvar my-packages '(clojure-mode
+                      nrepl
+                      nrepl-ritz))
+(dolist (p my-packages)
+  (when (not (package-installed-p p))
+    (package-install p)))
+(add-hook 'nrepl-interaction-mode-hook 'my-nrepl-mode-setup)
+(defun my-nrepl-mode-setup ()
+  (require 'nrepl-ritz))
+
+;; cython
+(require 'cython-mode)
+
+
+;; R
+(require 'ess)
+(setq auto-mode-alist
+     (cons (cons "\\.r$" 'R-mode) auto-mode-alist))
+(autoload 'R-mode "ess-site" "Emacs Speaks Statistics mode" t)
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
+(ac-config-default)
+(require 'ess-R-object-popup)
+(require 'ess-smart-underscore)
+(require 'r-autoyas)
+
+
+;; evernote
+
+(require 'evernote-mode)
+(setq evernote-username "kumagi") ; optional: you can use this username as default.
+(setq evernote-enml-formatter-command '("w3m" "-dump" "-I" "UTF8" "-O" "UTF8")) ; optional
+(global-set-key "\C-cec" 'evernote-create-note)
+(global-set-key "\C-ceo" 'evernote-open-note)
+(global-set-key "\C-ces" 'evernote-search-notes)
+(global-set-key "\C-ceS" 'evernote-do-saved-search)
+(global-set-key "\C-cew" 'evernote-write-note)
+(global-set-key "\C-cep" 'evernote-post-region)
+(global-set-key "\C-ceb" 'evernote-browser)
